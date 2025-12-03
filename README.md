@@ -1,13 +1,18 @@
 # epiweek
 
-Epidemiological week conversion tool for TypeScript/JavaScript. Supports both MMWR (CDC) and ISO week systems.
+Epidemiological week conversion tool for TypeScript/JavaScript, originally forked from [`reichlab/mmwr-week`](https://github.com/reichlab/mmwr-week).
+Modernized with a new stack and additional features inspired by [`dralshehri/epiweeks`](https://github.com/dralshehri/epiweeks).
 
-Forked from [reichlab/mmwr-week](https://github.com/reichlab/mmwr-week), originally based on [jarad/MMWRWeek](https://github.com/jarad/MMWRweek) (R package).
+Supports both MMWR (CDC) and ISO week systems.
 
 ## Installation
 
 ```shell
-pnpm install epiweek
+npm install @mu373/epiweek
+# or
+pnpm install @mu373/epiweek
+# or
+yarn add @mu373/epiweek
 ```
 
 ## Usage

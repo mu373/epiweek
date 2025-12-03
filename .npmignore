@@ -1,3 +1,10 @@
-/index.ts
-/tests.spec.ts
-/yarn.lock
+src/
+tests/
+*.spec.ts
+*.test.ts
+tsconfig*.json
+eslint.config.mjs
+.prettierrc
+.prettierignore
+vitest.config.ts
+pnpm-lock.yaml

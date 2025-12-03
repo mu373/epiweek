@@ -1,5 +1,7 @@
 # epiweek
 
+![NPM Version](https://img.shields.io/npm/v/%40mu373%2Fepiweek)
+
 Epidemiological week conversion tool for TypeScript/JavaScript, originally forked from [`reichlab/mmwr-week`](https://github.com/reichlab/mmwr-week).
 Modernized with a new stack and additional features inspired by [`dralshehri/epiweeks`](https://github.com/dralshehri/epiweeks).
 

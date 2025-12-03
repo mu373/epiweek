@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Compare mmwr-week (TypeScript) with epiweeks (Python) library.
+Compare epiweek (TypeScript) with epiweeks (Python) library.
 
 This script validates that both libraries produce identical results for:
 1. Date to epiweek conversion
@@ -8,7 +8,7 @@ This script validates that both libraries produce identical results for:
 3. Number of weeks in a year
 
 Usage:
-    npx tsx scripts/generate_mmwr_results.ts  # Generate mmwr_results.json first
+    npx tsx scripts/generate_epiweek_results.ts  # Generate epiweek_results.json first
     uv run scripts/compare_epiweeks.py
 """
 
@@ -34,20 +34,20 @@ class ComparisonResult(NamedTuple):
     details: str
 
 
-def load_mmwr_results() -> dict:
-    """Load mmwr-week results from JSON file."""
-    json_path = Path(__file__).parent / "mmwr_results.json"
+def load_epiweek_results() -> dict:
+    """Load epiweek (TS) results from JSON file."""
+    json_path = Path(__file__).parent / "epiweek_results.json"
     if not json_path.exists():
         print(f"Error: {json_path} not found.", file=sys.stderr)
-        print("Run 'npx tsx scripts/generate_mmwr_results.ts' first.", file=sys.stderr)
+        print("Run 'npx tsx scripts/generate_epiweek_results.ts' first.", file=sys.stderr)
         sys.exit(1)
     return json.loads(json_path.read_text())
 
 
-def compare_date_to_epiweek(mmwr_results: dict) -> ComparisonResult:
+def compare_date_to_epiweek(ts_results: dict) -> ComparisonResult:
     """Compare date to epiweek conversion."""
     mismatches = []
-    test_dates = list(mmwr_results["dateToEpiweek"].keys())
+    test_dates = list(ts_results["dateToEpiweek"].keys())
 
     for date_str in test_dates:
         year, month, day = map(int, date_str.split("-"))
@@ -57,13 +57,13 @@ def compare_date_to_epiweek(mmwr_results: dict) -> ComparisonResult:
         py_week = Week.fromdate(d, system="cdc")
         py_result = {"year": py_week.year, "week": py_week.week}
 
-        # mmwr-week library
-        ts_result = mmwr_results["dateToEpiweek"][date_str]
+        # epiweek (TS) library
+        ts_result = ts_results["dateToEpiweek"][date_str]
         ts_comparable = {"year": ts_result["year"], "week": ts_result["week"]}
 
         if py_result != ts_comparable:
             mismatches.append(
-                f"{date_str}: epiweeks={py_result}, mmwr-week={ts_comparable}"
+                f"{date_str}: epiweeks(py)={py_result}, epiweek(ts)={ts_comparable}"
             )
 
     if mismatches:
@@ -81,7 +81,7 @@ def compare_date_to_epiweek(mmwr_results: dict) -> ComparisonResult:
     )
 
 
-def compare_epiweek_to_date(mmwr_results: dict) -> ComparisonResult:
+def compare_epiweek_to_date(ts_results: dict) -> ComparisonResult:
     """Compare epiweek to date conversion (week start dates)."""
     mismatches = []
 
@@ -90,11 +90,11 @@ def compare_epiweek_to_date(mmwr_results: dict) -> ComparisonResult:
         py_week = Week(year, 1, system="cdc")
         py_start = py_week.startdate().isoformat()
 
-        ts_start = mmwr_results["epiweekToDate"].get(f"{year}01")
+        ts_start = ts_results["epiweekToDate"].get(f"{year}01")
 
         if py_start != ts_start:
             mismatches.append(
-                f"Year {year} Week 1 start: epiweeks={py_start}, mmwr-week={ts_start}"
+                f"Year {year} Week 1 start: epiweeks(py)={py_start}, epiweek(ts)={ts_start}"
             )
 
         # Test last week end date
@@ -102,12 +102,12 @@ def compare_epiweek_to_date(mmwr_results: dict) -> ComparisonResult:
         py_last_week = list(py_year.iterweeks())[-1]
         py_end = py_last_week.enddate().isoformat()
 
-        nweeks = mmwr_results["weeksInYear"].get(str(year), 52)
-        ts_end = mmwr_results["epiweekToDate"].get(f"{year}{nweeks:02d}_end")
+        nweeks = ts_results["weeksInYear"].get(str(year), 52)
+        ts_end = ts_results["epiweekToDate"].get(f"{year}{nweeks:02d}_end")
 
         if py_end != ts_end:
             mismatches.append(
-                f"Year {year} Week {nweeks} end: epiweeks={py_end}, mmwr-week={ts_end}"
+                f"Year {year} Week {nweeks} end: epiweeks(py)={py_end}, epiweek(ts)={ts_end}"
             )
 
     if mismatches:
@@ -123,7 +123,7 @@ def compare_epiweek_to_date(mmwr_results: dict) -> ComparisonResult:
     )
 
 
-def compare_weeks_in_year(mmwr_results: dict) -> ComparisonResult:
+def compare_weeks_in_year(ts_results: dict) -> ComparisonResult:
     """Compare number of weeks in each year."""
     mismatches = []
 
@@ -131,11 +131,11 @@ def compare_weeks_in_year(mmwr_results: dict) -> ComparisonResult:
         py_year = Year(year, system="cdc")
         py_weeks = len(list(py_year.iterweeks()))
 
-        ts_weeks = mmwr_results["weeksInYear"].get(str(year))
+        ts_weeks = ts_results["weeksInYear"].get(str(year))
 
         if py_weeks != ts_weeks:
             mismatches.append(
-                f"Year {year}: epiweeks={py_weeks} weeks, mmwr-week={ts_weeks} weeks"
+                f"Year {year}: epiweeks(py)={py_weeks} weeks, epiweek(ts)={ts_weeks} weeks"
             )
 
     if mismatches:
@@ -153,22 +153,22 @@ def compare_weeks_in_year(mmwr_results: dict) -> ComparisonResult:
 
 def main():
     print("=" * 60)
-    print("Comparing mmwr-week (TypeScript) with epiweeks (Python)")
+    print("Comparing epiweek (TypeScript) with epiweeks (Python)")
     print("=" * 60)
     print()
 
-    # Load mmwr-week results
-    print("Loading mmwr-week results...")
-    mmwr_results = load_mmwr_results()
-    test_count = len(mmwr_results["dateToEpiweek"])
+    # Load epiweek (TS) results
+    print("Loading epiweek (TS) results...")
+    ts_results = load_epiweek_results()
+    test_count = len(ts_results["dateToEpiweek"])
     print(f"Loaded {test_count} date conversions")
     print()
 
     # Run comparisons
     results = [
-        compare_date_to_epiweek(mmwr_results),
-        compare_epiweek_to_date(mmwr_results),
-        compare_weeks_in_year(mmwr_results),
+        compare_date_to_epiweek(ts_results),
+        compare_epiweek_to_date(ts_results),
+        compare_weeks_in_year(ts_results),
     ]
 
     # Print results
@@ -185,11 +185,11 @@ def main():
     print("=" * 60)
     if all_passed:
         print("All comparisons PASSED")
-        print("mmwr-week produces identical results to epiweeks (Python)")
+        print("epiweek (TS) produces identical results to epiweeks (Python)")
         sys.exit(0)
     else:
         print("Some comparisons FAILED")
-        print("mmwr-week differs from epiweeks (Python)")
+        print("epiweek (TS) differs from epiweeks (Python)")
         sys.exit(1)
 
 

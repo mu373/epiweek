@@ -1,12 +1,12 @@
 /**
- * Generate mmwr-week results for comparison with epiweeks (Python).
- * Writes JSON to scripts/mmwr_results.json
+ * Generate epiweek results for comparison with epiweeks (Python).
+ * Writes JSON to scripts/epiweek_results.json
  *
- * Usage: npx tsx scripts/generate_mmwr_results.ts
+ * Usage: npx tsx scripts/generate_epiweek_results.ts
  */
 
 import { writeFileSync } from 'fs'
-import { MMWRDate } from '../src/index'
+import { EpiWeek } from '../src/index'
 
 interface Results {
   dateToEpiweek: Record<string, { year: number; week: number; day: number }>
@@ -57,33 +57,33 @@ function main() {
   for (const dateStr of testDates) {
     const [year, month, day] = dateStr.split('-').map(Number)
     const jsDate = new Date(year, month - 1, day)
-    const md = new MMWRDate(year, 1, 1)
-    md.fromJSDate(jsDate)
+    const ew = new EpiWeek(year, 1, 1)
+    ew.fromJSDate(jsDate)
     results.dateToEpiweek[dateStr] = {
-      year: md.year,
-      week: md.week,
-      day: md.day,
+      year: ew.year,
+      week: ew.week,
+      day: ew.day,
     }
   }
 
   // Test epiweek to date conversion (years 2015-2030)
   for (let year = 2015; year <= 2030; year++) {
-    const md = new MMWRDate(year, 1, 1)
-    const startDate = md.toJSDate()
+    const ew = new EpiWeek(year, 1, 1)
+    const startDate = ew.toJSDate()
     const dateStr = startDate.toISOString().split('T')[0]
     results.epiweekToDate[`${year}01`] = dateStr
 
     // Also test last week end date
-    const nWeeks = md.nWeeks
-    const mdLast = new MMWRDate(year, nWeeks, 7)
-    const endDate = mdLast.toJSDate()
+    const nWeeks = ew.nWeeks
+    const ewLast = new EpiWeek(year, nWeeks, 7)
+    const endDate = ewLast.toJSDate()
     results.epiweekToDate[`${year}${nWeeks.toString().padStart(2, '0')}_end`] =
       endDate.toISOString().split('T')[0]
 
     results.weeksInYear[year] = nWeeks
   }
 
-  const outputPath = new URL('./mmwr_results.json', import.meta.url).pathname
+  const outputPath = new URL('./epiweek_results.json', import.meta.url).pathname
   writeFileSync(outputPath, JSON.stringify(results, null, 2))
   console.log(`Written to ${outputPath}`)
   console.log(`Tested ${testDates.length} dates`)

@@ -30,8 +30,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Generate mmwr-week results
-        run: npx tsx scripts/generate_mmwr_results.ts
+      - name: Generate epiweek results
+        run: npx tsx scripts/generate_epiweek_results.ts
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
@@ -103,5 +103,5 @@ jobs:
       - name: Fail if comparison failed
         if: steps.compare.outputs.status == 'failure'
         run: |
-          echo "Comparison failed - mmwr-week differs from epiweeks"
+          echo "Comparison failed - epiweek differs from Python epiweeks"
           exit 1

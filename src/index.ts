@@ -1,5 +1,5 @@
 /**
- * Main module file for mmwr-week
+ * Main module file for epiweek
  */
 
 import { addDays, getYear, differenceInDays, getISODay } from 'date-fns'
@@ -11,14 +11,17 @@ import { memoize } from 'micro-memoize'
 export type Epiweek = number
 
 /**
- * Memoized function for number of MMWR weeks in a year
+ * Week system type - MMWR (CDC) or ISO
  */
-const weeksInYear = memoize(function (year: number): number {
-  const md = new MMWRDate(year, 1)
-  const ed = new MMWRDate(year, 53)
-  ed.fromJSDate(ed.toJSDate())
-  return ed.year === md.year ? 53 : 52
-})
+export type WeekSystem = 'mmwr' | 'iso'
+
+/**
+ * Options for EpiWeek constructor
+ */
+export interface EpiWeekOptions {
+  system?: WeekSystem
+  day?: number
+}
 
 /**
  * Get the start date of MMWR year (first day of week 1)
@@ -40,24 +43,60 @@ function getMMWRYearStart(year: number): Date {
 }
 
 /**
- * Class representing an MMWR date
+ * Get start date of ISO week year (Monday of week 1)
+ * ISO week 1 contains January 4th (i.e., the first week with a Thursday in the new year)
  */
-export class MMWRDate {
+function getISOWeekYearStart(year: number): Date {
+  const jan4 = new Date(year, 0, 4)
+  const dayOfWeek = getISODay(jan4) // Mon=1 to Sun=7
+  // Go back to Monday of that week
+  return addDays(jan4, 1 - dayOfWeek)
+}
+
+/**
+ * Get start date for a given year and week system
+ */
+function getYearStart(year: number, system: WeekSystem): Date {
+  return system === 'iso' ? getISOWeekYearStart(year) : getMMWRYearStart(year)
+}
+
+/**
+ * Memoized function for number of weeks in a year for a given system
+ */
+const weeksInYear = memoize(function (year: number, system: WeekSystem): number {
+  const start = getYearStart(year, system)
+  const nextStart = getYearStart(year + 1, system)
+  return Math.round(differenceInDays(nextStart, start) / 7)
+})
+
+/**
+ * Class representing an epidemiological week (MMWR or ISO)
+ */
+export class EpiWeek {
   public year: number
   public week: number
   public day: number
+  public readonly system: WeekSystem
 
-  constructor(year: number, week: number = 1, day: number = 1) {
+  constructor(year: number, week: number = 1, options?: EpiWeekOptions | number) {
     this.year = year
     this.week = week
-    this.day = day
+
+    if (typeof options === 'number') {
+      // Legacy API: third param is day
+      this.day = options
+      this.system = 'mmwr'
+    } else {
+      this.day = options?.day ?? 1
+      this.system = options?.system ?? 'mmwr'
+    }
   }
 
   /**
    * Return year start date (first day of week 1)
    */
   get startDate(): Date {
-    return getMMWRYearStart(this.year)
+    return getYearStart(this.year, this.system)
   }
 
   /**
@@ -74,7 +113,7 @@ export class MMWRDate {
    */
   fromJSDate(date: Date = new Date()) {
     const year = getYear(date)
-    const startDates = [year - 1, year, year + 1].map((y) => getMMWRYearStart(y))
+    const startDates = [year - 1, year, year + 1].map((y) => getYearStart(y, this.system))
     const diffs = startDates.map((d) => differenceInDays(date, d))
 
     let startId = 1
@@ -85,9 +124,14 @@ export class MMWRDate {
 
     this.year = getYear(addDays(startDate, 7))
     this.week = Math.floor(differenceInDays(date, startDate) / 7) + 1
-    // MMWR day: Sunday = 1, Monday = 2, ..., Saturday = 7
+
+    // Day calculation differs by system
     const isoDay = getISODay(date) // Mon=1 to Sun=7
-    this.day = (isoDay % 7) + 1 // Sun=1, Mon=2, ..., Sat=7
+    if (this.system === 'iso') {
+      this.day = isoDay // ISO: Mon=1 to Sun=7
+    } else {
+      this.day = (isoDay % 7) + 1 // MMWR: Sun=1 to Sat=7
+    }
   }
 
   /**
@@ -107,25 +151,25 @@ export class MMWRDate {
   }
 
   /**
-   * Return number of weeks in this MMWR season
+   * Return number of weeks in this epi year
    */
   get nWeeks(): number {
-    return weeksInYear(this.year)
+    return weeksInYear(this.year, this.system)
   }
 
   /**
    * Return number of weeks differing from this.
-   * Equivalent of this - mdate
+   * Equivalent of this - other
    */
-  diffWeek(mdate: MMWRDate): number {
-    if (this.year === mdate.year) {
-      return this.week - mdate.week
+  diffWeek(other: EpiWeek): number {
+    if (this.year === other.year) {
+      return this.week - other.week
     } else {
       // Order of dates [low, high]
-      let ds = [this, mdate]
+      let ds = [this, other]
       let sign = -1
-      if (this.year > mdate.year) {
-        ds = [mdate, this]
+      if (this.year > other.year) {
+        ds = [other, this]
         sign = 1
       }
 
@@ -134,7 +178,7 @@ export class MMWRDate {
 
       let begin = ds[0].year + 1
       while (begin < ds[1].year) {
-        diff += nWeeks
+        diff += weeksInYear(begin, this.system)
         begin++
       }
       return sign * diff
@@ -171,4 +215,56 @@ export class MMWRDate {
       }
     }
   }
+
+  /**
+   * Check equality with another EpiWeek
+   */
+  equals(other: EpiWeek): boolean {
+    return (
+      this.system === other.system &&
+      this.year === other.year &&
+      this.week === other.week &&
+      this.day === other.day
+    )
+  }
+
+  /**
+   * Check if this EpiWeek is before another
+   */
+  isBefore(other: EpiWeek): boolean {
+    // Cross-system: compare actual dates
+    if (this.system !== other.system) {
+      return this.toJSDate().getTime() < other.toJSDate().getTime()
+    }
+    if (this.year !== other.year) return this.year < other.year
+    if (this.week !== other.week) return this.week < other.week
+    return this.day < other.day
+  }
+
+  /**
+   * Check if this EpiWeek is after another
+   */
+  isAfter(other: EpiWeek): boolean {
+    if (this.system !== other.system) {
+      return this.toJSDate().getTime() > other.toJSDate().getTime()
+    }
+    if (this.year !== other.year) return this.year > other.year
+    if (this.week !== other.week) return this.week > other.week
+    return this.day > other.day
+  }
+
+  /**
+   * Iterate over all dates in this week
+   */
+  *iterDates(): Generator<Date, void, unknown> {
+    const weekStart = getYearStart(this.year, this.system)
+    const firstDayOfWeek = addDays(weekStart, (this.week - 1) * 7)
+
+    for (let d = 0; d < 7; d++) {
+      yield addDays(firstDayOfWeek, d)
+    }
+  }
 }
+
+/** @deprecated Use EpiWeek instead */
+export { EpiWeek as MMWRDate }

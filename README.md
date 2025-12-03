@@ -96,4 +96,4 @@ Type alias for `number` representing epiweek in yyyyww format.
 
 ## License
 
-[MIT License](https://github.com/mu373/mmwr-week/blob/master/LICENSE)
+[MIT License](https://github.com/mu373/mmwr-week/blob/main/LICENSE)

@@ -1,0 +1,36 @@
+name: Compare with dralshehri/epiweeks
+
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate mmwr-week results
+        run: npx tsx scripts/generate_mmwr_results.ts
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Compare with epiweeks
+        run: uv run scripts/compare_epiweeks.py

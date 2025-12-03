@@ -21,11 +21,14 @@
   "files": [
     "dist"
   ],
-  "author": "Abhinav Tushar <abhinav.tushar.vs@gmail.com>",
+  "author": "Minami Ueda <minami.ueda@gmail.com>",
+  "contributors": [
+    "Abhinav Tushar <abhinav.tushar.vs@gmail.com>"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/reichlab/mmwr-week.git"
+    "url": "https://github.com/mu373/mmwr-week.git"
   },
   "scripts": {
     "build": "pnpm run build:esm && pnpm run build:cjs && pnpm run build:cjs-package",

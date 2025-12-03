@@ -172,4 +172,4 @@ type Epiweek = number // format: yyyyww
 
 ## License
 
-[MIT License](https://github.com/mu373/mmwr-week/blob/main/LICENSE)
+[MIT License](https://github.com/mu373/epiweek/blob/main/LICENSE)

@@ -7,6 +7,17 @@ Modernized with a new stack and additional features inspired by [`dralshehri/epi
 
 Supports both MMWR (CDC) and ISO week systems.
 
+## Features
+
+- **Dual week system support**: MMWR (CDC) and ISO 8601 week systems
+- **Date conversion**: Convert between epi weeks and JavaScript Date objects
+- **Week arithmetic**: Calculate week differences and apply week offsets
+- **Comparison operators**: Compare epi weeks with `equals`, `isBefore`, `isAfter`
+- **Date iteration**: Iterate over all dates in a week
+- **Modern stack**: TypeScript 5.x, dual ESM/CJS, Vitest, ESLint 9
+- **Migration from moment.js**: Replaced with date-fns for smaller bundle size
+- **Full test coverage**: Results [validated against Python `dralshehri/epiweeks`](https://github.com/mu373/epiweek/actions/workflows/compare-epiweeks.yml) implementation
+
 ## Installation
 
 ```shell

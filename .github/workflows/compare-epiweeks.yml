@@ -5,6 +5,10 @@ on:
     branches: [master]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   compare:
     runs-on: ubuntu-latest
@@ -33,4 +37,71 @@ jobs:
         uses: astral-sh/setup-uv@v4
 
       - name: Compare with epiweeks
-        run: uv run scripts/compare_epiweeks.py
+        id: compare
+        run: |
+          set +e
+          output=$(uv run scripts/compare_epiweeks.py 2>&1)
+          exit_code=$?
+          set -e
+
+          echo "$output"
+          echo "$output" > comparison_output.txt
+
+          if [ $exit_code -eq 0 ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate comment
+        run: |
+          commit_sha="${{ github.event.pull_request.head.sha }}"
+          commit_short="${commit_sha:0:7}"
+          status="${{ steps.compare.outputs.status }}"
+
+          if [ "$status" = "success" ]; then
+            emoji="✅"
+            title="Comparison Passed"
+          else
+            emoji="❌"
+            title="Comparison Failed"
+          fi
+
+          cat > comment.md << EOF
+          ## $emoji epiweeks Comparison: $title
+
+          **Commit:** \`$commit_short\`
+
+          Compared with Python [dralshehri/epiweeks](https://github.com/dralshehri/epiweeks) library.
+
+          <details>
+          <summary>Output</summary>
+
+          \`\`\`
+          $(cat comparison_output.txt)
+          \`\`\`
+
+          </details>
+          EOF
+
+      - name: Find existing comment
+        id: find_comment
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: 'epiweeks Comparison'
+
+      - name: Create or update comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find_comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: comment.md
+          edit-mode: replace
+
+      - name: Fail if comparison failed
+        if: steps.compare.outputs.status == 'failure'
+        run: |
+          echo "Comparison failed - mmwr-week differs from epiweeks"
+          exit 1

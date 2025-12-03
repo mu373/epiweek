@@ -26,6 +26,14 @@
     "Abhinav Tushar <abhinav.tushar.vs@gmail.com>"
   ],
   "license": "MIT",
+  "keywords": [
+    "epiweek",
+    "epiweeks",
+    "flusight",
+    "mmwr",
+    "epidemiology",
+    "cdc"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/mu373/epiweek.git"

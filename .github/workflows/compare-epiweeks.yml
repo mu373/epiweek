@@ -31,7 +31,7 @@ jobs:
         run: pnpm install
 
       - name: Generate epiweek results
-        run: npx tsx scripts/generate_mmwr_results.ts
+        run: npx tsx scripts/generate_epiweek_results.ts
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4

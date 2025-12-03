@@ -1,8 +1,8 @@
 /**
  * Generate epiweek results for comparison with epiweeks (Python).
- * Writes JSON to scripts/mmwr_results.json
+ * Writes JSON to scripts/epiweek_results.json
  *
- * Usage: npx tsx scripts/generate_mmwr_results.ts
+ * Usage: npx tsx scripts/generate_epiweek_results.ts
  */
 
 import { writeFileSync } from 'fs'
@@ -83,7 +83,7 @@ function main() {
     results.weeksInYear[year] = nWeeks
   }
 
-  const outputPath = new URL('./mmwr_results.json', import.meta.url).pathname
+  const outputPath = new URL('./epiweek_results.json', import.meta.url).pathname
   writeFileSync(outputPath, JSON.stringify(results, null, 2))
   console.log(`Written to ${outputPath}`)
   console.log(`Tested ${testDates.length} dates`)

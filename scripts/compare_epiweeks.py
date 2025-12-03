@@ -8,7 +8,7 @@ This script validates that both libraries produce identical results for:
 3. Number of weeks in a year
 
 Usage:
-    npx tsx scripts/generate_mmwr_results.ts  # Generate mmwr_results.json first
+    npx tsx scripts/generate_epiweek_results.ts  # Generate epiweek_results.json first
     uv run scripts/compare_epiweeks.py
 """
 
@@ -36,10 +36,10 @@ class ComparisonResult(NamedTuple):
 
 def load_epiweek_results() -> dict:
     """Load epiweek (TS) results from JSON file."""
-    json_path = Path(__file__).parent / "mmwr_results.json"
+    json_path = Path(__file__).parent / "epiweek_results.json"
     if not json_path.exists():
         print(f"Error: {json_path} not found.", file=sys.stderr)
-        print("Run 'npx tsx scripts/generate_mmwr_results.ts' first.", file=sys.stderr)
+        print("Run 'npx tsx scripts/generate_epiweek_results.ts' first.", file=sys.stderr)
         sys.exit(1)
     return json.loads(json_path.read_text())
 

@@ -2,7 +2,7 @@ name: Compare with dralshehri/epiweeks
 
 on:
   pull_request:
-    branches: [master]
+    branches: [main]
   workflow_dispatch:
 
 permissions:

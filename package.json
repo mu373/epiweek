@@ -1,5 +1,5 @@
 {
-  "name": "epiweek",
+  "name": "@mu373/epiweek",
   "version": "2.0.0",
   "description": "Epidemiological week conversion tool (MMWR and ISO)",
   "type": "module",
